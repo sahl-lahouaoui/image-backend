@@ -5,9 +5,13 @@ const fs = require("fs");
 
 const app = express();
 
-app.get("/image/*", async (req, res) => {
+app.use(async (req, res, next) => {
+    if (!req.path.startsWith("/image/")) {
+        return next();
+    }
+
     try {
-        const imagePath = req.params[0];
+        const imagePath = req.path.replace("/image/", "");
 
         if (!imagePath) {
             return res.status(400).send("Image path is required");
@@ -36,7 +40,7 @@ app.get("/image/*", async (req, res) => {
 
         const image = await sharp(filePath)
             .resize({
-                width: width,
+                width,
                 withoutEnlargement: true
             })
             .webp({
@@ -57,6 +61,10 @@ app.get("/image/*", async (req, res) => {
         console.error(error);
         res.status(500).send("Image processing error");
     }
+});
+
+app.get("/", (req, res) => {
+    res.send("Image backend is running!");
 });
 
 const PORT = process.env.PORT || 3000;
